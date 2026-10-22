@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+/* Tyndall design tokens · burnt orange on warm neutrals.
+   Light is the default; `.dark` on <html> switches the palette. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --canvas: #faf7f3;
+  --surface: #ffffff;
+  --surface-2: #f5efe8;
+  --surface-3: #ece4da;
+  --line: #e6ddd2;
+  --line-strong: #d4c8ba;
+  --ink: #1a1410;
+  --text: #2d251f;
+  --muted: #6e6258;
+  --faint: #9a8e83;
+
+  --brand-50: #fdf4ec;
+  --brand-100: #fae3cf;
+  --brand-200: #f4c4a0;
+  --brand-300: #eb9d68;
+  --brand-400: #df773a;
+  --brand-500: #c95b1d;
+  --brand-600: #b14a14;
+  --brand-700: #8e3a12;
+  --brand-800: #6b2c10;
+  --brand-900: #44200d;
+  --brand: var(--brand-600);
+  --brand-fg: #ffffff;
+  --brand-soft: var(--brand-50);
+  --brand-text: var(--brand-700);
+
+  --ok: #15803d;
+  --warn: #a16207;
+  --bad: #b91c1c;
+  --info: #1d4ed8;
+  --tech: #0f766e;
+  --seal: #4338ca;
+  --neutral: #6b7280;
+
+  --focus: #df773a;
+  --shadow-sm: 0 1px 2px rgba(26, 20, 16, 0.05);
+  --shadow-md: 0 6px 16px -6px rgba(26, 20, 16, 0.12), 0 2px 4px rgba(26, 20, 16, 0.04);
+  --shadow-lg: 0 24px 48px -16px rgba(26, 20, 16, 0.22);
+}
+
+.dark {
+  --canvas: #110d0b;
+  --surface: #1a1512;
+  --surface-2: #231d19;
+  --surface-3: #2e2621;
+  --line: #352c26;
+  --line-strong: #4a3e35;
+  --ink: #fbf6f1;
+  --text: #ece3da;
+  --muted: #b2a497;
+  --faint: #85776b;
+
+  --brand: #e5803f;
+  --brand-fg: #1a0f08;
+  --brand-soft: rgba(229, 128, 63, 0.12);
+  --brand-text: #f2a46f;
+
+  --ok: #4ade80;
+  --warn: #facc15;
+  --bad: #f87171;
+  --info: #60a5fa;
+  --tech: #2dd4bf;
+  --seal: #a5b4fc;
+  --neutral: #9ca3af;
+
+  --focus: #f2a46f;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.7);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-text: var(--brand-text);
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-info: var(--info);
+  --color-tech: var(--tech);
+  --color-seal: var(--seal);
+  --color-neutral: var(--neutral);
+  --color-focus: var(--focus);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+html,
+body {
+  background: var(--canvas);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--brand-200);
+  color: var(--brand-900);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

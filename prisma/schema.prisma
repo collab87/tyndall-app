@@ -1,0 +1,315 @@
+// Tyndall platform data model.
+// SQLite for local development; switch `provider` to "postgresql" for production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Organisation {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  name        String
+  type        String // DEVELOPER | BUYER | TYNDALL
+  country     String       @default("Nigeria")
+  regNumber   String?
+  address     String?
+  status      String       @default("VERIFIED") // PENDING | VERIFIED | SUSPENDED
+  createdAt   DateTime     @default(now())
+  users       User[]
+  projects    Project[]
+  holdings    CreditBlock[]
+  retirements Retirement[]
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  passwordHash String
+  role         String // see src/lib/roles.ts
+  title        String?
+  phone        String?
+  status       String        @default("ACTIVE") // ACTIVE | INVITED | DISABLED
+  orgId        String?
+  org          Organisation? @relation(fields: [orgId], references: [id])
+  auditor      Auditor?
+  createdAt    DateTime      @default(now())
+  lastLoginAt  DateTime?
+}
+
+// A VVB or auditor. Either a firm or an individual; they register themselves
+// and a Tyndall admin approves them before developers can choose them.
+model Auditor {
+  id                  String    @id @default(cuid())
+  code                String    @unique
+  kind                String // FIRM | INDIVIDUAL
+  name                String
+  contactName         String?
+  email               String    @unique
+  phone               String?
+  city                String
+  country             String
+  roles               String // comma list: VVB,AUDITOR
+  methodologies       String // comma list of methodology codes
+  years               Int
+  accreditation       String
+  accreditationExpiry DateTime?
+  languages           String
+  bio                 String?
+  teamSize            Int?
+  consultsFor         String? // comma list of project codes this party advised on
+  status              String    @default("PENDING") // PENDING | APPROVED | REJECTED | SUSPENDED
+  reviewNote          String?
+  reviewedBy          String?
+  reviewedAt          DateTime?
+  userId              String?   @unique
+  user                User?     @relation(fields: [userId], references: [id])
+  vvbProjects         Project[] @relation("vvb")
+  auditProjects       Project[] @relation("auditor")
+  findings            Finding[]
+  createdAt           DateTime  @default(now())
+}
+
+model Methodology {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  version   String
+  sector    String
+  unitLabel String // the monitored quantity, e.g. "kWh", "km", "litres"
+  summary   String
+  projects  Project[]
+}
+
+model Project {
+  id              String            @id @default(cuid())
+  code            String            @unique
+  name            String
+  orgId           String
+  org             Organisation      @relation(fields: [orgId], references: [id])
+  methodologyId   String
+  methodology     Methodology       @relation(fields: [methodologyId], references: [id])
+  activity        String
+  about           String
+  location        String
+  country         String            @default("Nigeria")
+  units           Int
+  unitType        String
+  instrument      String
+  interval        String
+  calibration     String
+  creditingYears  Int               @default(10)
+  startDate       String?
+  feeBand         String
+  programmeFee    Int
+  consultant      String?
+  relatedParty    String?
+  rightsDeclared  Boolean           @default(false)
+  stage           String            @default("DRAFT") // see src/lib/stages.ts
+  reviewNote      String?
+  vvbId           String?
+  vvb             Auditor?          @relation("vvb", fields: [vvbId], references: [id])
+  auditorId       String?
+  auditor         Auditor?          @relation("auditor", fields: [auditorId], references: [id])
+  listed          Boolean           @default(false)
+  expectedPerYear Int?
+  pddVersion      Int               @default(0)
+  pddHash         String?
+  scalePlan       String?
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  pilot           Pilot?
+  pddSections     PddSection[]
+  devices         Device[]
+  findings        Finding[]
+  invoices        Invoice[]
+  issuances       IssuanceRequest[]
+  blocks          CreditBlock[]
+  retirements     Retirement[]
+  logs            AuditLog[]
+  purchases       PurchaseRequest[]
+}
+
+model Pilot {
+  id           String    @id @default(cuid())
+  projectId    String    @unique
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  units        Int
+  comparison   String?
+  durationDays Int       @default(90)
+  status       String    @default("PLANNING") // PLANNING | RUNNING | REPORTED | VALIDATED
+  plan         String?
+  baseline     String? // JSON array of [parameter, value, unit]
+  reportNote   String?
+  vvbNote      String?
+  startedAt    DateTime?
+  reportedAt   DateTime?
+  validatedAt  DateTime?
+}
+
+model PddSection {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  code      String
+  part      String
+  title     String
+  kind      String  @default("TEXT") // TEXT | PILOT | AUTO
+  content   String?
+  evidence  String?
+  status    String  @default("TODO") // TODO | COMPLETE | COMMENT
+  comment   String?
+  sort      Int
+
+  @@unique([projectId, code])
+}
+
+model Device {
+  id             String    @id @default(cuid())
+  imei           String    @unique
+  serial         String    @unique
+  model          String
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  location       String
+  status         String    @default("PAIRED") // PAIRED | ONLINE | OFFLINE | FAULT | CALIBRATION
+  isPilot        Boolean   @default(false)
+  firmware       String    @default("2.4.1")
+  completeness   Float?
+  signingKey     String
+  lastSeenAt     DateTime?
+  commissionedAt DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+model Finding {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  auditorId   String
+  auditor     Auditor   @relation(fields: [auditorId], references: [id])
+  type        String // CAR | CLR | FAR
+  phase       String
+  title       String
+  detail      String
+  request     String
+  atStake     String?
+  due         DateTime?
+  status      String    @default("OPEN") // OPEN | RESPONDED | CLOSED
+  response    String?
+  evidence    String?
+  respondedAt DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Invoice {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  kind      String // REG | INIT | VVB | AUD1 | SCALE | AUD2 | ISSUE
+  category  String // PROJECT | TEAM
+  title     String
+  amount    Int // naira, excluding VAT
+  vat       Int
+  payee     String
+  status    String    @default("DUE") // DUE | PAID
+  method    String?
+  paidAt    DateTime?
+  paidBy    String?
+  createdAt DateTime  @default(now())
+}
+
+model IssuanceRequest {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  projectId    String
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  period       String
+  vintage      String
+  quantity     Int
+  inferredPct  Float         @default(0)
+  status       String        @default("PENDING") // PENDING | ISSUED | RETURNED
+  preparedById String
+  preparedBy   String
+  approvedBy   String?
+  note         String?
+  serialFrom   Int?
+  serialTo     Int?
+  tokenTx      String?
+  preparedAt   DateTime      @default(now())
+  approvedAt   DateTime?
+  blocks       CreditBlock[]
+}
+
+model CreditBlock {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  orgId       String
+  org         Organisation    @relation(fields: [orgId], references: [id])
+  projectId   String
+  project     Project         @relation(fields: [projectId], references: [id])
+  issuanceId  String
+  issuance    IssuanceRequest @relation(fields: [issuanceId], references: [id])
+  vintage     String
+  serialStart Int
+  quantity    Int // remaining in this block
+  createdAt   DateTime        @default(now())
+}
+
+model Retirement {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  orgId       String
+  org         Organisation @relation(fields: [orgId], references: [id])
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id])
+  vintage     String
+  quantity    Int
+  serialStart Int
+  serialEnd   Int
+  beneficiary String
+  reason      String
+  claimPeriod String
+  burnTx      String
+  retiredBy   String
+  createdAt   DateTime     @default(now())
+}
+
+model PurchaseRequest {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  buyerName String
+  buyerOrg  String
+  email     String
+  quantity  Int
+  message   String?
+  status    String   @default("NEW") // NEW | IN_DISCUSSION | CLOSED
+  createdAt DateTime @default(now())
+}
+
+// Append-only. No code path updates or deletes rows here.
+model AuditLog {
+  id        String   @id @default(cuid())
+  at        DateTime @default(now())
+  actorName String
+  actorRole String
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  phase     String
+  action    String
+  diff      String?
+  hash      String
+  prevHash  String?
+}
