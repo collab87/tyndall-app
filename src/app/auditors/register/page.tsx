@@ -7,6 +7,7 @@ import { applyAsAuditor } from "./actions";
 import { KindFields } from "./kind-fields";
 
 export const metadata = { title: "Apply as a VVB or auditor" };
+export const dynamic = "force-dynamic";
 
 export default async function AuditorRegisterPage() {
   const meths = await db.methodology.findMany({ orderBy: { code: "asc" } });
@@ -24,10 +25,10 @@ export default async function AuditorRegisterPage() {
           <div className="flex flex-col gap-2 sm:col-span-2">
             <span className="text-[13px] font-semibold text-ink">Roles</span>
             <div className="grid gap-2 sm:grid-cols-2">
-              <Check name="roles" defaultChecked>
+              <Check name="roles" value="VVB" defaultChecked>
                 <b>VVB</b> · validates the pilot and the PDD
               </Check>
-              <Check name="roles">
+              <Check name="roles" value="AUDITOR">
                 <b>Auditor</b> · audits monitoring for the project lifetime
               </Check>
             </div>

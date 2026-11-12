@@ -343,10 +343,10 @@ export function Select({ className, options, ...p }: ComponentProps<"select"> & 
   );
 }
 
-export function Check({ name, children, defaultChecked, required }: { name: string; children: ReactNode; defaultChecked?: boolean; required?: boolean }) {
+export function Check({ name, value, children, defaultChecked, required }: { name: string; value?: string; children: ReactNode; defaultChecked?: boolean; required?: boolean }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-[13px] leading-snug text-text has-[:checked]:border-brand/50 has-[:checked]:bg-brand-soft">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} required={required} className="mt-0.5 size-4 accent-[var(--brand)]" />
+      <input type="checkbox" name={name} value={value} defaultChecked={defaultChecked} required={required} className="mt-0.5 size-4 accent-[var(--brand)]" />
       <span>{children}</span>
     </label>
   );
